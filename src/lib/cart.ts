@@ -10,8 +10,14 @@ type Product = {
   price: number;
 };
 
+type Condition = {
+  percentage: number;
+  minimum: number;
+};
+
 export type Item = {
   product: Product;
+  condition?: Condition;
   quantity: number;
 };
 
@@ -35,9 +41,23 @@ export default class Cart {
 
   getTotal() {
     const total = this.items.reduce((accumulator, currentItem) => {
-      return accumulator.add(
-        Money({ amount: currentItem.quantity * currentItem.product.price })
-      );
+      const amount = Money({
+        amount: currentItem.quantity * currentItem.product.price
+      });
+
+      let discount = Money({ amount: 0 });
+
+      if (
+        currentItem.condition &&
+        currentItem.condition.minimum &&
+        currentItem.condition.percentage &&
+        currentItem.quantity > currentItem.condition.minimum
+      ) {
+        const percentageDiscount = currentItem.condition.percentage;
+        discount = amount.percentage(percentageDiscount);
+      }
+
+      return accumulator.add(amount).subtract(discount);
     }, Money({ amount: 0 }));
 
     return total.getAmount();
