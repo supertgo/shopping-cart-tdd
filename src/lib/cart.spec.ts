@@ -66,4 +66,72 @@ describe('Cart', () => {
       expect(cart.getTotal()).toBe(41872);
     });
   });
+
+  describe('checkout()', () => {
+    it('should return an object with the total and the list of items', () => {
+      cart.add({
+        product,
+        quantity: 2
+      });
+
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      expect(cart.checkout()).toMatchSnapshot();
+    });
+
+    it('should return an object with the items when summary is called', () => {
+      cart.add({
+        product,
+        quantity: 2
+      });
+
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      expect(cart.summary()).toMatchSnapshot();
+      expect(cart.getTotal()).toBeGreaterThan(0);
+    });
+
+    it('should reset the cart when chekcout() is called', () => {
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      cart.checkout();
+
+      expect(cart.getTotal()).toBe(0);
+    });
+
+    it('should reset the cart when clear() is called', () => {
+      cart.add({
+        product,
+        quantity: 2
+      });
+
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      cart.add({
+        product,
+        quantity: 2
+      });
+
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      cart.clear();
+
+      expect(cart.items).toStrictEqual([]);
+    });
+  });
 });

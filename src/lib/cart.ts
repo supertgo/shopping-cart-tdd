@@ -11,6 +11,11 @@ export type Item = {
   quantity: number;
 };
 
+type Summary = {
+  total: number;
+  items: Item[];
+};
+
 export default class Cart {
   items: Item[] = [];
 
@@ -32,5 +37,30 @@ export default class Cart {
 
   remove(product: Product) {
     remove(this.items, { product });
+  }
+
+  clear() {
+    this.items = [];
+  }
+
+  summary(): Summary {
+    const total = this.getTotal();
+    const items = this.items;
+
+    return {
+      total,
+      items
+    };
+  }
+
+  checkout() {
+    const { total, items } = this.summary();
+
+    this.clear();
+
+    return {
+      total,
+      items
+    };
   }
 }
