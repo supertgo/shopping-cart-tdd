@@ -1,89 +1,11 @@
 import find from 'lodash/find';
 import remove from 'lodash/remove';
 import Money from 'dinero.js';
+import { calculateDiscount } from './discount.utils';
+import { Item, Product, Summary } from './cart.types';
 
 Money.defaultCurrency = 'BRL';
 Money.defaultPrecision = 2;
-
-type Product = {
-  title: string;
-  price: number;
-};
-
-type Condition = {
-  quantity?: number;
-  percentage?: number;
-  minimum?: number;
-};
-
-export type Item = {
-  product: Product;
-  condition?: Condition | Condition[];
-  quantity: number;
-};
-
-type Summary = {
-  total: number;
-  items: Item[];
-  formatted: string;
-};
-
-type CalculateDiscountFunctions = {
-  condition?: Condition;
-  quantity: number;
-};
-
-const calculatePercentageDiscount = (
-  amount: Money.Dinero,
-  { condition, quantity }: CalculateDiscountFunctions
-) => {
-  if (condition?.percentage && quantity > condition.minimum) {
-    return amount.percentage(condition.percentage);
-  }
-
-  return Money({ amount: 0 });
-};
-
-const calculateQuantityDiscount = (
-  amount: Money.Dinero,
-  { condition, quantity }: CalculateDiscountFunctions
-) => {
-  const isEven = quantity % 2 === 0;
-
-  if (condition?.quantity && quantity > condition?.quantity) {
-    return amount.percentage(isEven ? 50 : 40);
-  }
-
-  return Money({ amount: 0 });
-};
-
-const calculateDiscount = (
-  amount: Money.Dinero,
-  quantity: number,
-  condition: Condition | Condition[]
-) => {
-  const list = Array.isArray(condition) ? condition : [condition];
-
-  const [higherDiscount] = list
-    .map((cond) => {
-      if (cond.percentage) {
-        return calculatePercentageDiscount(amount, {
-          condition: cond,
-          quantity
-        }).getAmount();
-      } else if (cond.quantity) {
-        return calculateQuantityDiscount(amount, {
-          condition: cond,
-          quantity
-        }).getAmount();
-      }
-    })
-    .sort((a, b) => {
-      return b - a;
-    });
-
-  return Money({ amount: higherDiscount });
-};
 
 export default class Cart {
   items: Item[] = [];
