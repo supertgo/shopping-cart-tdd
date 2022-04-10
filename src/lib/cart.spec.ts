@@ -97,6 +97,20 @@ describe('Cart', () => {
       expect(cart.getTotal()).toBeGreaterThan(0);
     });
 
+    it('should include formatted amount in the summary', () => {
+      cart.add({
+        product,
+        quantity: 2
+      });
+
+      cart.add({
+        product: product2,
+        quantity: 3
+      });
+
+      expect(cart.summary().formatted).toBe('R$ 196.392,00');
+    });
+
     it('should reset the cart when chekcout() is called', () => {
       cart.add({
         product: product2,
@@ -207,7 +221,7 @@ describe('Cart', () => {
       expect(cart.getTotal()).toEqual(product.price * 2);
     });
 
-    it('should receive two or more conditions and determine/apply the best one', () => {
+    it('First case: should receive two or more conditions and determine/apply the best one', () => {
       const condition1 = {
         percentage: 30, //30%
         minimum: 2
@@ -223,7 +237,26 @@ describe('Cart', () => {
         quantity: 5
       });
 
-      expect(cart.getTotal()).toEqual(106164);
+      expect(cart.getTotal()).toEqual(product.price * 5 * 0.6);
+    });
+
+    it('Second case: should receive two or more conditions and determine/apply the best one', () => {
+      const condition1 = {
+        percentage: 60, //30%
+        minimum: 2
+      };
+
+      const condition2 = {
+        quantity: 2 //40%
+      };
+
+      cart.add({
+        product,
+        condition: [condition1, condition2],
+        quantity: 5
+      });
+
+      expect(cart.getTotal()).toEqual(product.price * 5 * 0.4);
     });
   });
 });

@@ -25,20 +25,20 @@ export type Item = {
 type Summary = {
   total: number;
   items: Item[];
+  formatted: string;
 };
 
 type CalculateDiscountFunctions = {
-  product: Product;
   condition?: Condition;
   quantity: number;
 };
 
 const calculatePercentageDiscount = (
   amount: Money.Dinero,
-  item: CalculateDiscountFunctions
+  { condition, quantity }: CalculateDiscountFunctions
 ) => {
-  if (item.condition?.percentage && item.quantity > item.condition.minimum) {
-    return amount.percentage(item.condition.percentage);
+  if (condition?.percentage && quantity > condition.minimum) {
+    return amount.percentage(condition.percentage);
   }
 
   return Money({ amount: 0 });
@@ -46,11 +46,11 @@ const calculatePercentageDiscount = (
 
 const calculateQuantityDiscount = (
   amount: Money.Dinero,
-  item: CalculateDiscountFunctions
+  { condition, quantity }: CalculateDiscountFunctions
 ) => {
-  const isEven = item.quantity % 2 === 0;
+  const isEven = quantity % 2 === 0;
 
-  if (item.condition?.quantity && item.quantity > item.condition?.quantity) {
+  if (condition?.quantity && quantity > condition?.quantity) {
     return amount.percentage(isEven ? 50 : 40);
   }
 
@@ -60,8 +60,7 @@ const calculateQuantityDiscount = (
 const calculateDiscount = (
   amount: Money.Dinero,
   quantity: number,
-  condition: Condition | Condition[],
-  item: Product
+  condition: Condition | Condition[]
 ) => {
   const list = Array.isArray(condition) ? condition : [condition];
 
@@ -70,14 +69,12 @@ const calculateDiscount = (
       if (cond.percentage) {
         return calculatePercentageDiscount(amount, {
           condition: cond,
-          quantity,
-          product: item
+          quantity
         }).getAmount();
       } else if (cond.quantity) {
         return calculateQuantityDiscount(amount, {
           condition: cond,
-          quantity,
-          product: item
+          quantity
         }).getAmount();
       }
     })
@@ -102,23 +99,21 @@ export default class Cart {
   }
 
   getTotal() {
-    const total = this.items.reduce((accumulator, currentItem) => {
-      const amount = Money({
-        amount: currentItem.quantity * currentItem.product.price
-      });
-      let discount = Money({ amount: 0 });
+    const total = this.items.reduce(
+      (accumulator, { quantity, condition, product: { price } }) => {
+        const amount = Money({
+          amount: quantity * price
+        });
+        let discount = Money({ amount: 0 });
 
-      if (currentItem.condition) {
-        discount = calculateDiscount(
-          amount,
-          currentItem.quantity,
-          currentItem.condition,
-          currentItem.product
-        );
-      }
+        if (condition) {
+          discount = calculateDiscount(amount, quantity, condition);
+        }
 
-      return accumulator.add(amount).subtract(discount);
-    }, Money({ amount: 0 }));
+        return accumulator.add(amount).subtract(discount);
+      },
+      Money({ amount: 0 })
+    );
 
     return total.getAmount();
   }
@@ -133,10 +128,15 @@ export default class Cart {
 
   summary(): Summary {
     const total = this.getTotal();
+    const formatted = new Intl.NumberFormat('pt-Br', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(total);
     const items = this.items;
 
     return {
       total,
+      formatted,
       items
     };
   }
