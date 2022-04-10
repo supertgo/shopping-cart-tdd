@@ -1,11 +1,13 @@
 import find from 'lodash/find';
 import remove from 'lodash/remove';
 
+type Product = {
+  title: string;
+  price: number;
+};
+
 export type Item = {
-  product: {
-    title: string;
-    price: number;
-  };
+  product: Product;
   quantity: number;
 };
 
@@ -26,5 +28,9 @@ export default class Cart {
     return this.items.reduce((accumulator, currentItem) => {
       return accumulator + currentItem.quantity * currentItem.product.price;
     }, 0);
+  }
+
+  remove(product: Product) {
+    remove(this.items, { product });
   }
 }
